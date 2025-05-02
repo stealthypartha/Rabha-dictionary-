@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rabha-English Dictionary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .highlight {
+      background-color: #d9f99d; /* yellow-green */
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    input:focus {
+      border-color: #fb923c !important;
+      box-shadow: 0 0 0 2px #fb923c !important;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col justify-start transition-colors duration-300 pt-12">
+  <main class="flex flex-col items-center px-6">
+    <h1 class="text-4xl font-semibold text-black mb-10">Rabha-English Dictionary</h1>
+    <div class="w-full max-w-xl relative mb-6">
+      <input id="searchInput" type="text" placeholder="Type Rabha or English word" class="w-full border border-gray-300 rounded-xl py-3 px-5 pr-12 text-gray-700 placeholder-gray-400 focus:outline-none" />
+      <i id="searchIcon" class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg cursor-pointer"></i>
+    </div>
+
+    <div class="flex items-center space-x-4 mb-6 w-full max-w-xl">
+      <button id="playAudio" class="border border-gray-300 rounded-full p-4 text-orange-400 hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-400">
+        <i class="fas fa-volume-up text-xl"></i>
+      </button>
+      <h2 id="translated-word" class="text-2xl font-semibold text-orange-400"></h2>
+    </div>
+
+    <div class="w-full max-w-xl">
+      <p class="text-base text-black mb-1">Meaning:</p>
+      <p id="meaning" class="text-base text-black"></p>
+    </div>
+    <div class="w-full max-w-xl mt-4">
+      <p class="text-base text-black mb-1">Example:</p>
+      <p id="example" class="text-base text-black"></p>
+    </div>
+  </main>
+
+  <footer class="text-center py-6 text-sm text-black font-mono mt-auto">
+    @partharabha
+  </footer>
+
+  <script>
+  const dictionary = {
+    "nang": { translation: "you", meaning: "Second person singular pronoun.", example: "Nang cha? → Are you there?" },
+    "you": { translation: "nang", meaning: "Second person singular pronoun.", example: "Are you here, nang?" },
+    "ang": { translation: "I", meaning: "First person singular pronoun.", example: "Ang no seng. → I am going." },
+    "i": { translation: "ang", meaning: "First person singular pronoun.", example: "I am ang." },
+    "cha": { translation: "where", meaning: "Used to ask about location.", example: "Cha nang no? → Where are you?" },
+    "where": { translation: "cha", meaning: "Used to ask about location.", example: "Where is cha?" }
+  };
+
+  const input = document.getElementById("searchInput");
+  const icon = document.getElementById("searchIcon");
+  const translatedWord = document.getElementById("translated-word");
+  const meaningEl = document.getElementById("meaning");
+  const exampleEl = document.getElementById("example");
+  const audioBtn = document.getElementById("playAudio");
+
+  const fuzzyMatch = (word) => {
+  word = word.toLowerCase();
+  if (dictionary[word]) return word;
+
+  const isEnglish = /^[a-zA-Z]+$/.test(word);
+  let bestMatch = '';
+  let highestScore = 0;
+
+  for (let key in dictionary) {
+    if (isEnglish && !/^[a-zA-Z]+$/.test(key)) continue;
+    if (!isEnglish && /^[a-zA-Z]+$/.test(key)) continue;
+
+    // Enforce left-side (prefix) match
+    if (!key.startsWith(word)) continue;
+
+    let score = 0;
+    for (let i = 0; i < word.length; i++) {
+      if (key[i] === word[i]) score++;
+    }
+
+    if (score > highestScore) {
+      highestScore = score;
+      bestMatch = key;
+    }
+  }
+
+  return highestScore >= 2 ? bestMatch : null;
+};
+  const searchWord = () => {
+    const query = input.value.trim().toLowerCase();
+    if (!query) return;
+
+    // Check if input is a sentence (more than one word)
+    if (query.includes(" ")) {
+      translateSentence(query);
+      return;
+    }
+
+    const matched = fuzzyMatch(query);
+    if (!matched) {
+      translatedWord.textContent = "Not found";
+      meaningEl.textContent = "No meaning found.";
+      exampleEl.textContent = "No example found.";
+      return;
+    }
+
+    const entry = dictionary[matched];
+    const isEnglish = /^[a-zA-Z]+$/.test(query);
+    const targetLangWord = isEnglish ? entry.translation : matched;
+    const meaningText = entry.meaning;
+    const exampleText = entry.example.replace(new RegExp(`\\b${targetLangWord}\\b`, 'i'), `<span class="highlight">${targetLangWord}</span>`);
+
+    translatedWord.textContent = entry.translation;
+    meaningEl.textContent = meaningText;
+    exampleEl.innerHTML = exampleText;
+  };
+
+  const translateSentence = (sentence) => {
+    const words = sentence.trim().toLowerCase().split(/\s+/);
+    const isEnglish = /^[a-zA-Z\s]+$/.test(sentence);
+    const translatedWords = [];
+
+    for (let word of words) {
+      const matched = fuzzyMatch(word);
+      if (matched) {
+        const entry = dictionary[matched];
+        translatedWords.push(isEnglish ? entry.translation : matched);
+      } else {
+        translatedWords.push("[?]");
+      }
+    }
+
+    translatedWord.textContent = translatedWords.join(" ");
+    meaningEl.textContent = "Full sentence translation.";
+    exampleEl.innerHTML = "Each word is translated individually.";
+  };
+
+  input.addEventListener("input", searchWord);
+  icon.addEventListener("click", searchWord);
+  input.addEventListener("keydown", e => e.key === "Enter" && searchWord());
+
+  audioBtn.addEventListener("click", () => {
+    const word = translatedWord.textContent;
+    if (!word || word === "Not found") return;
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = /^[a-zA-Z]+$/.test(word) ? "en-US" : "hi-IN";
+    speechSynthesis.speak(utter);
+  });
+  </script>
