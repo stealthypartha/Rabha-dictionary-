@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- HEAD: Metadata, Fonts, Styles -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rabha-English Dictionary</title>
@@ -22,14 +23,19 @@
     }
   </style>
 </head>
+
 <body class="bg-white min-h-screen flex flex-col justify-start transition-colors duration-300 pt-12">
+  <!-- MAIN UI -->
   <main class="flex flex-col items-center px-6">
     <h1 class="text-4xl font-semibold text-black mb-10">Rabha-English Dictionary</h1>
+
+    <!-- SEARCH INPUT -->
     <div class="w-full max-w-xl relative mb-6">
       <input id="searchInput" type="text" placeholder="Type Rabha or English word" class="w-full border border-gray-300 rounded-xl py-3 px-5 pr-12 text-gray-700 placeholder-gray-400 focus:outline-none" />
       <i id="searchIcon" class="fas fa-search absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg cursor-pointer"></i>
     </div>
 
+    <!-- AUDIO BUTTON & TRANSLATED WORD -->
     <div class="flex items-center space-x-4 mb-6 w-full max-w-xl">
       <button id="playAudio" class="border border-gray-300 rounded-full p-4 text-orange-400 hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-400">
         <i class="fas fa-volume-up text-xl"></i>
@@ -37,21 +43,26 @@
       <h2 id="translated-word" class="text-2xl font-semibold text-orange-400"></h2>
     </div>
 
+    <!-- MEANING SECTION -->
     <div class="w-full max-w-xl">
       <p class="text-base text-black mb-1">Meaning:</p>
       <p id="meaning" class="text-base text-black"></p>
     </div>
+
+    <!-- EXAMPLE SECTION -->
     <div class="w-full max-w-xl mt-4">
       <p class="text-base text-black mb-1">Example:</p>
       <p id="example" class="text-base text-black"></p>
     </div>
   </main>
 
+  <!-- FOOTER -->
   <footer class="text-center py-6 text-sm text-black font-mono mt-auto">
     @partharabha
   </footer>
 
   <script>
+  // DICTIONARY DATA
   const dict = {
     nang: { translation: "you", meaning: "Second person singular pronoun.", example: "Nang cha? → Are you there?" },
     you: { translation: "nang", meaning: "Second person singular pronoun.", example: "Are you here, nang?" },
@@ -61,11 +72,13 @@
     where: { translation: "cha", meaning: "Used to ask about location.", example: "Where is cha?" }
   };
 
+  // UTILITY SELECTOR
   const $ = id => document.getElementById(id);
   const input = $("searchInput"), icon = $("searchIcon"),
         translatedWord = $("translated-word"), meaningEl = $("meaning"),
         exampleEl = $("example"), audioBtn = $("playAudio");
 
+  // FUNCTION: Fuzzy Match Word
   const fuzzyMatch = word => {
     word = word.toLowerCase();
     if (dict[word]) return word;
@@ -84,6 +97,7 @@
     return score >= 2 ? best : null;
   };
 
+  // FUNCTION: Show Word Result
   const showResult = (word, entry, isEng) => {
     translatedWord.textContent = entry.translation;
     meaningEl.textContent = entry.meaning;
@@ -93,6 +107,7 @@
     );
   };
 
+  // FUNCTION: Translate Sentence (Full/Grammar)
   const translateSentence = (sentence, grammar = false) => {
     const words = sentence.trim().toLowerCase().split(/\s+/);
     const isEng = /^[a-z\s]+$/i.test(sentence);
@@ -113,6 +128,7 @@
     exampleEl.innerHTML = untrans.length ? `Could not translate: ${untrans.join(", ")}` : "All words translated.";
   };
 
+  // FUNCTION: Handle Search Input
   const searchWord = () => {
     const q = input.value.trim().toLowerCase();
     if (!q) return;
@@ -129,9 +145,12 @@
     showResult(match, dict[match], /^[a-z]+$/i.test(q));
   };
 
+  // EVENT: Input Listeners
   input.addEventListener("input", searchWord);
   icon.addEventListener("click", searchWord);
   input.addEventListener("keydown", e => e.key === "Enter" && searchWord());
+
+  // EVENT: Play Audio Button
   audioBtn.addEventListener("click", () => {
     const w = translatedWord.textContent;
     if (!w || w === "Not found") return;
@@ -139,4 +158,7 @@
     u.lang = /^[a-z]+$/i.test(w) ? "en-US" : "hi-IN";
     speechSynthesis.speak(u);
   });
-</script>
+
+  </script>
+</body>
+</html>
